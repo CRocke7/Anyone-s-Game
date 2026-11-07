@@ -385,8 +385,8 @@ for (let row = 0; row < rows; row++) {
         const b = a + columns + 1;
 
         fairwayIndices.push(
-            a, b, a + 1,
-            b, b + 1, a + 1
+           a, a + 1, b,
+           a + 1, b + 1, b
         );
     }
 }
