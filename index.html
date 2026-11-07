@@ -299,7 +299,7 @@ function addBush(x, z, scale = 1) {
 
     scene.add(bush);
 }
-    
+
 // ======================================
 // TERRAIN HEIGHT
 // ======================================
@@ -311,12 +311,19 @@ function terrainHeight(x, z) {
         0.9 * Math.exp(-Math.pow((z + 5) / 5, 2));
 
     const dip =
-        -0.45 * Math.exp(-Math.pow((z + 13) / 4, 2));
+        -0.45 * Math.exp(-Math.pow((z + 12) / 4, 2));
 
     const secondHill =
-        0.75 * Math.exp(-Math.pow((z + 21) / 4.5, 2));
+        0.75 * Math.exp(-Math.pow((z + 16) / 4.5, 2));
 
-    return (firstHill + dip + secondHill) * acrossFairway;
+    // Gradually flatten terrain near the tee and putting green
+    const startFade = THREE.MathUtils.smoothstep(z, 9, 15);
+    const endFade = 1 - THREE.MathUtils.smoothstep(z, -22.5, -18);
+
+    return (firstHill + dip + secondHill)
+        * acrossFairway
+        * startFade
+        * endFade;
 }
 
 // ======================================
@@ -334,8 +341,8 @@ for (let i = 0; i < groundPositions.count; i++) {
     const z = -groundPositions.getY(i);
 
     groundPositions.setZ(
-    i, terrainHeight(x, z)
-);
+        i, terrainHeight(x, z)
+    );
 }
 
 groundGeometry.computeVertexNormals();
@@ -364,7 +371,7 @@ const columns = 20;
 
 for (let row = 0; row <= rows; row++) {
     const t = row / rows;
-    const z = 14 - t * 48;
+    const z = 14 - t * 36;
 
     const centerX = Math.sin(t * Math.PI * 1.5) * 0.6;
     const width = 5 + Math.sin(t * Math.PI) * 0.5;
@@ -385,8 +392,8 @@ for (let row = 0; row < rows; row++) {
         const b = a + columns + 1;
 
         fairwayIndices.push(
-           a, a + 1, b,
-           a + 1, b + 1, b
+            a, a + 1, b,
+            a + 1, b + 1, b
         );
     }
 }
