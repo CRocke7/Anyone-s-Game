@@ -423,7 +423,7 @@ const teeBox = new THREE.Mesh(
 );
 
 teeBox.rotation.x = -Math.PI / 2;
-teeBox.position.set(0, 0.035, 11);
+teeBox.position.set(0, 0.035, 20);
 teeBox.receiveShadow = true;
 
 scene.add(teeBox);
@@ -439,7 +439,7 @@ for (const x of [-2.5, 2.5]) {
         markerMaterial
     );
 
-    marker.position.set(x, 0.1, 11);
+    marker.position.set(x, 0.1, 20);
     marker.castShadow = true;
 
     scene.add(marker);
@@ -597,7 +597,7 @@ face.position.set(0.16, 1.25, -0.36);
 
 player.add(face);
 
-player.position.set(-2, 0, 13);
+player.position.set(-2, 0, 22);
 
 // ======================================
 // GOLF BALL
