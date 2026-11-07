@@ -4,69 +4,72 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Anyone's Game</title>
-
 <style>
-    body {
-        margin: 0;
-        overflow: hidden;
-        font-family: Arial, sans-serif;
-        background: #87ceeb;
-    }
-
-    #hud {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        color: white;
-        background: rgba(0,0,0,0.65);
-        padding: 16px 20px;
-        border-radius: 12px;
-        z-index: 2;
-    }
-
-    #hud h2 {
-        margin: 0 0 8px;
-        letter-spacing: 1px;
-    }
-
-    #powerBar {
-        width: 180px;
-        height: 12px;
-        background: #444;
-        border-radius: 8px;
-        overflow: hidden;
-        margin-top: 8px;
-    }
-
-    #powerFill {
-        width: 0%;
-        height: 100%;
-        background: #79e66b;
-    }
-
-    #instructions {
-        position: absolute;
-        bottom: 20px;
-        left: 20px;
-        color: white;
-        background: rgba(0,0,0,0.65);
-        padding: 12px 16px;
-        border-radius: 10px;
-        line-height: 1.6;
-        z-index: 2;
-    }
-
-    #message {
-        position: absolute;
-        top: 25px;
-        right: 25px;
-        color: white;
-        font-size: 18px;
-        z-index: 2;
-    }
+body {
+    margin: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    background: #87ceeb;
+}
+#hud {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    color: white;
+    background: rgba(0,0,0,0.65);
+    padding: 16px 20px;
+    border-radius: 12px;
+    z-index: 2;
+}
+#hud h2 { margin: 0 0 8px; letter-spacing: 1px; }
+#powerBar {
+    width: 180px;
+    height: 12px;
+    background: #444;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+#powerFill {
+    width: 0%;
+    height: 100%;
+    background: #79e66b;
+}
+#instructions {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    color: white;
+    background: rgba(0,0,0,0.65);
+    padding: 12px 16px;
+    border-radius: 10px;
+    line-height: 1.6;
+    z-index: 2;
+}
+#message {
+    position: absolute;
+    top: 25px;
+    right: 25px;
+    color: white;
+    font-size: 18px;
+    z-index: 2;
+}
+#lockMessage {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    color: white;
+    background: rgba(0,0,0,0.7);
+    padding: 18px 24px;
+    border-radius: 12px;
+    font-size: 18px;
+    text-align: center;
+    z-index: 3;
+    pointer-events: none;
+}
 </style>
 </head>
-
 <body>
 
 <div id="hud">
@@ -82,11 +85,14 @@
     WASD — Move<br>
     SPACE — Jump<br>
     SHIFT — Sprint<br>
-    LEFT / RIGHT — Aim<br>
+    MOUSE — Look around<br>
     HOLD LEFT CLICK — Charge shot<br>
     RELEASE — Hit the ball<br>
-    R — Reset ball
+    R — Reset ball<br>
+    ESC — Release mouse
 </div>
+
+<div id="lockMessage">Click the game to start looking around</div>
 
 <script type="module">
 import * as THREE from
@@ -99,10 +105,7 @@ scene.fog = new THREE.Fog(0x87ceeb, 35, 100);
 
 // CAMERA
 const camera = new THREE.PerspectiveCamera(
-    65,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    200
+    65, window.innerWidth / window.innerHeight, 0.1, 200
 );
 
 // RENDERER
@@ -118,7 +121,6 @@ const sunlight = new THREE.DirectionalLight(0xffffff, 2);
 sunlight.position.set(-10, 20, 10);
 sunlight.castShadow = true;
 scene.add(sunlight);
-
 scene.add(new THREE.HemisphereLight(0xffffff, 0x668855, 1.5));
 
 // GROUND
@@ -126,12 +128,11 @@ const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(100, 100),
     new THREE.MeshStandardMaterial({ color: 0x55a84f })
 );
-
 ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
 scene.add(ground);
 
-// DECORATIVE COURSE LINES
+// COURSE LINES
 const grid = new THREE.GridHelper(100, 50, 0x438c3c, 0x438c3c);
 grid.position.y = 0.015;
 scene.add(grid);
@@ -144,7 +145,6 @@ const playerBody = new THREE.Mesh(
     new THREE.CapsuleGeometry(0.45, 1.0, 5, 12),
     new THREE.MeshStandardMaterial({ color: 0x2468d8 })
 );
-
 playerBody.position.y = 0.95;
 playerBody.castShadow = true;
 player.add(playerBody);
@@ -154,7 +154,6 @@ const face = new THREE.Mesh(
     new THREE.SphereGeometry(0.055, 12, 12),
     new THREE.MeshStandardMaterial({ color: 0xffffff })
 );
-
 face.position.set(0.16, 1.25, -0.36);
 player.add(face);
 
@@ -162,7 +161,6 @@ player.position.set(-3, 0, 3);
 
 // GOLF BALL
 const ballRadius = 0.22;
-
 const ball = new THREE.Mesh(
     new THREE.SphereGeometry(ballRadius, 32, 32),
     new THREE.MeshStandardMaterial({
@@ -170,7 +168,6 @@ const ball = new THREE.Mesh(
         roughness: 0.35
     })
 );
-
 ball.position.set(2, ballRadius, 0);
 ball.castShadow = true;
 scene.add(ball);
@@ -178,18 +175,50 @@ scene.add(ball);
 const ballStart = new THREE.Vector3(2, ballRadius, 0);
 let ballVelocity = new THREE.Vector3();
 
-// PLAYER MOVEMENT
+// PLAYER CONTROLS
 const keys = {};
 let playerVelocityY = 0;
-let playerRotation = 0;
 
+let cameraYaw = 0;
+let cameraPitch = 0;
+
+const mouseSensitivity = 0.0025;
 const moveSpeed = 6;
 const sprintSpeed = 10;
 const jumpPower = 9;
 const gravity = 22;
 
+const lockMessage = document.getElementById('lockMessage');
+
+renderer.domElement.addEventListener('click', () => {
+    if (document.pointerLockElement !== renderer.domElement) {
+        renderer.domElement.requestPointerLock();
+    }
+});
+
+document.addEventListener('pointerlockchange', () => {
+    lockMessage.style.display =
+        document.pointerLockElement === renderer.domElement
+        ? 'none' : 'block';
+});
+
+document.addEventListener('mousemove', (event) => {
+    if (document.pointerLockElement !== renderer.domElement) return;
+
+    cameraYaw -= event.movementX * mouseSensitivity;
+    cameraPitch += event.movementY * mouseSensitivity;
+
+    cameraPitch = THREE.MathUtils.clamp(
+        cameraPitch, -0.8, 0.8
+    );
+});
+
+window.addEventListener('contextmenu', event => event.preventDefault());
+
 window.addEventListener('keydown', (event) => {
     keys[event.code] = true;
+
+    if (event.code === 'Space') event.preventDefault();
 
     if (event.code === 'KeyR') {
         ball.position.copy(ballStart);
@@ -204,37 +233,45 @@ window.addEventListener('keyup', (event) => {
 // GOLF SHOOTING
 let charging = false;
 let chargeTime = 0;
-let shotPower = 0;
 
 window.addEventListener('pointerdown', (event) => {
-    if (event.button === 0) {
-        charging = true;
-        chargeTime = 0;
+    if (event.button !== 0) return;
+
+    // First click captures the mouse.
+    if (document.pointerLockElement !== renderer.domElement) {
+        return;
     }
+
+    charging = true;
+    chargeTime = 0;
 });
 
 window.addEventListener('pointerup', (event) => {
-    if (event.button === 0 && charging) {
-        charging = false;
-        shotPower = Math.min(chargeTime / 1.5, 1);
+    if (event.button !== 0 || !charging) return;
 
-        const direction = new THREE.Vector3(
-            Math.sin(playerRotation),
-            0,
-            -Math.cos(playerRotation)
+    charging = false;
+
+    const shotPower = Math.min(chargeTime / 1.5, 1);
+
+    // Shoot in the direction the camera is facing.
+    const direction = new THREE.Vector3(
+        Math.sin(cameraYaw),
+        0,
+        -Math.cos(cameraYaw)
+    );
+
+    const distance = ball.position.distanceTo(player.position);
+
+    if (distance < 12) {
+        ballVelocity.addScaledVector(
+            direction, 8 + shotPower * 17
         );
+        ballVelocity.y += 2 + shotPower * 5;
 
-        const distance = ball.position.distanceTo(player.position);
-
-        if (distance < 12) {
-            ballVelocity.addScaledVector(direction, 8 + shotPower * 17);
-            ballVelocity.y += 2 + shotPower * 5;
-            document.getElementById('message').textContent =
-                'NICE SHOT!';
-        } else {
-            document.getElementById('message').textContent =
-                'Get closer to the ball!';
-        }
+        document.getElementById('message').textContent = 'NICE SHOT!';
+    } else {
+        document.getElementById('message').textContent =
+            'Get closer to the ball!';
     }
 });
 
@@ -247,34 +284,45 @@ function animate() {
 
     const delta = Math.min(clock.getDelta(), 0.033);
 
-    // PLAYER AIMING
-    if (keys['ArrowLeft']) playerRotation += 2.5 * delta;
-    if (keys['ArrowRight']) playerRotation -= 2.5 * delta;
-
-    // MOVEMENT INPUT
+    // CAMERA-RELATIVE MOVEMENT
     let moveX = 0;
     let moveZ = 0;
 
-    if (keys['KeyW']) moveZ -= 1;
-    if (keys['KeyS']) moveZ += 1;
+    if (keys['KeyW']) moveZ += 1;
+    if (keys['KeyS']) moveZ -= 1;
     if (keys['KeyA']) moveX -= 1;
     if (keys['KeyD']) moveX += 1;
 
     const moving = moveX !== 0 || moveZ !== 0;
 
     if (moving) {
-        const direction = new THREE.Vector3(moveX, 0, moveZ).normalize();
+        const inputLength = Math.sqrt(moveX * moveX + moveZ * moveZ);
+        moveX /= inputLength;
+        moveZ /= inputLength;
 
-        const speed = keys['ShiftLeft'] || keys['ShiftRight']
-            ? sprintSpeed
-            : moveSpeed;
+        // Forward and right directions based on camera yaw.
+        const forward = new THREE.Vector3(
+            Math.sin(cameraYaw), 0, -Math.cos(cameraYaw)
+        );
+
+        const right = new THREE.Vector3(
+            Math.cos(cameraYaw), 0, Math.sin(cameraYaw)
+        );
+
+        const direction = new THREE.Vector3()
+            .addScaledVector(forward, moveZ)
+            .addScaledVector(right, moveX)
+            .normalize();
+
+        const speed =
+            keys['ShiftLeft'] || keys['ShiftRight']
+            ? sprintSpeed : moveSpeed;
 
         player.position.addScaledVector(direction, speed * delta);
-
-        playerRotation = Math.atan2(direction.x, -direction.z);
     }
 
-    player.rotation.y = playerRotation;
+    // CHARACTER ALWAYS FACES CAMERA DIRECTION.
+    player.rotation.y = cameraYaw;
 
     // JUMPING AND GRAVITY
     if (keys['Space'] && player.position.y <= 0.001) {
@@ -315,9 +363,7 @@ function animate() {
     ball.rotation.z -= ballVelocity.x * delta / ballRadius;
 
     // CHARGING POWER
-    if (charging) {
-        chargeTime += delta;
-    }
+    if (charging) chargeTime += delta;
 
     const power = charging ? Math.min(chargeTime / 1.5, 1) : 0;
 
@@ -327,17 +373,22 @@ function animate() {
     document.getElementById('powerFill').style.width =
         (power * 100) + '%';
 
-    // CAMERA FOLLOW
-    const cameraOffset = new THREE.Vector3(0, 5, 8);
-    cameraOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), playerRotation);
-
-    const targetCameraPosition = player.position.clone().add(cameraOffset);
-
-    camera.position.lerp(targetCameraPosition, 5 * delta);
-
+    // THIRD-PERSON CAMERA
     const lookTarget = player.position.clone();
-    lookTarget.y += 1;
+    lookTarget.y += 1.2;
 
+    const distance = 8;
+    const horizontalDistance = distance * Math.cos(cameraPitch);
+
+    const cameraOffset = new THREE.Vector3(
+        -Math.sin(cameraYaw) * horizontalDistance,
+        3 - Math.sin(cameraPitch) * distance,
+        Math.cos(cameraYaw) * horizontalDistance
+    );
+
+    const targetCameraPosition = lookTarget.clone().add(cameraOffset);
+
+    camera.position.lerp(targetCameraPosition, 8 * delta);
     camera.lookAt(lookTarget);
 
     renderer.render(scene, camera);
@@ -351,7 +402,6 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
-
 </script>
 </body>
 </html>
