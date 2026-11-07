@@ -301,11 +301,47 @@ function addBush(x, z, scale = 1) {
 }
     
 // ======================================
+// TERRAIN HEIGHT
+// ======================================
+
+function terrainHeight(x, z) {
+    const acrossFairway = Math.exp(-Math.pow(x / 9, 4));
+
+    const firstHill =
+        0.9 * Math.exp(-Math.pow((z + 5) / 5, 2));
+
+    const dip =
+        -0.45 * Math.exp(-Math.pow((z + 13) / 4, 2));
+
+    const secondHill =
+        0.75 * Math.exp(-Math.pow((z + 21) / 4.5, 2));
+
+    return (firstHill + dip + secondHill) * acrossFairway;
+}
+
+// ======================================
 // MAIN GROUND
 // ======================================
 
+const groundGeometry = new THREE.PlaneGeometry(
+    100, 100, 100, 100
+);
+
+const groundPositions = groundGeometry.attributes.position;
+
+for (let i = 0; i < groundPositions.count; i++) {
+    const x = groundPositions.getX(i);
+    const z = -groundPositions.getY(i);
+
+    groundPositions.setZ(
+        i, -terrainHeight(x, z)
+    );
+}
+
+groundGeometry.computeVertexNormals();
+
 const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(100, 100),
+    groundGeometry,
     grassMaterial
 );
 
@@ -318,45 +354,56 @@ scene.add(ground);
 // FAIRWAY
 // ======================================
 
-const fairwayShape = new THREE.Shape();
+const fairwayGeometry = new THREE.BufferGeometry();
 
-fairwayShape.moveTo(-5.5, -24);
+const fairwayVertices = [];
+const fairwayIndices = [];
 
-fairwayShape.bezierCurveTo(
-    -7, -12,
-    -5, -3,
-    -6, 6
+const rows = 100;
+const columns = 20;
+
+for (let row = 0; row <= rows; row++) {
+    const t = row / rows;
+    const z = 14 - t * 48;
+
+    const centerX = Math.sin(t * Math.PI * 1.5) * 0.6;
+    const width = 5 + Math.sin(t * Math.PI) * 0.5;
+
+    for (let col = 0; col <= columns; col++) {
+        const across = (col / columns) * 2 - 1;
+
+        const x = centerX + across * width;
+        const y = terrainHeight(x, z) + 0.035;
+
+        fairwayVertices.push(x, y, z);
+    }
+}
+
+for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < columns; col++) {
+        const a = row * (columns + 1) + col;
+        const b = a + columns + 1;
+
+        fairwayIndices.push(
+            a, b, a + 1,
+            b, b + 1, a + 1
+        );
+    }
+}
+
+fairwayGeometry.setAttribute(
+    'position',
+    new THREE.Float32BufferAttribute(fairwayVertices, 3)
 );
 
-fairwayShape.bezierCurveTo(
-    -6.5, 15,
-    -5, 21,
-    -4.5, 24
-);
-
-fairwayShape.lineTo(4.5, 24);
-
-fairwayShape.bezierCurveTo(
-    5, 15,
-    6.5, 8,
-    5.5, 0
-);
-
-fairwayShape.bezierCurveTo(
-    5, -10,
-    7, -17,
-    5.5, -24
-);
-
-fairwayShape.closePath();
+fairwayGeometry.setIndex(fairwayIndices);
+fairwayGeometry.computeVertexNormals();
 
 const fairway = new THREE.Mesh(
-    new THREE.ShapeGeometry(fairwayShape, 32),
+    fairwayGeometry,
     fairwayMaterial
 );
 
-fairway.rotation.x = -Math.PI / 2;
-fairway.position.set(0, 0.025, -10);
 fairway.receiveShadow = true;
 
 scene.add(fairway);
