@@ -463,17 +463,13 @@ function addHill(x, z, width, height, depth) {
         })
     );
 
-    hill.position.set(x, -height * 0.65, z);
+    hill.position.set(x, height * 0.25, z);
     hill.scale.set(width, height, depth);
     hill.receiveShadow = true;
+    hill.castShadow = true;
 
     scene.add(hill);
 }
-
-addHill(-24, 5, 9, 2.5, 13);
-addHill(25, -5, 10, 3, 15);
-addHill(-23, -30, 8, 2, 10);
-addHill(24, 28, 9, 2.5, 12);
 
 // ======================================
 // GOLF CUP
