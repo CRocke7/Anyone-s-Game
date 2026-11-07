@@ -334,8 +334,8 @@ for (let i = 0; i < groundPositions.count; i++) {
     const z = -groundPositions.getY(i);
 
     groundPositions.setZ(
-        i, -terrainHeight(x, z)
-    );
+    i, terrainHeight(x, z)
+);
 }
 
 groundGeometry.computeVertexNormals();
