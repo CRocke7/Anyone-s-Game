@@ -464,7 +464,7 @@ function addHill(x, z, width, height, depth) {
     );
 
     // Raise the hill so its bottom touches the ground.
-    hill.position.set(x, height, z);
+    hill.position.set(x, -height * 0.35, z);
     hill.scale.set(width, height, depth);
 
     hill.receiveShadow = true;
