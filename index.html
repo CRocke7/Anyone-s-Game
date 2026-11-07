@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Anyone's Game</title>
+
 <style>
 body {
     margin: 0;
@@ -11,6 +12,7 @@ body {
     font-family: Arial, sans-serif;
     background: #87ceeb;
 }
+
 #hud {
     position: absolute;
     top: 20px;
@@ -21,7 +23,12 @@ body {
     border-radius: 12px;
     z-index: 2;
 }
-#hud h2 { margin: 0 0 8px; letter-spacing: 1px; }
+
+#hud h2 {
+    margin: 0 0 8px;
+    letter-spacing: 1px;
+}
+
 #powerBar {
     width: 180px;
     height: 12px;
@@ -30,11 +37,13 @@ body {
     overflow: hidden;
     margin-top: 8px;
 }
+
 #powerFill {
     width: 0%;
     height: 100%;
     background: #79e66b;
 }
+
 #instructions {
     position: absolute;
     bottom: 20px;
@@ -46,6 +55,7 @@ body {
     line-height: 1.6;
     z-index: 2;
 }
+
 #message {
     position: absolute;
     top: 25px;
@@ -54,6 +64,7 @@ body {
     font-size: 18px;
     z-index: 2;
 }
+
 #lockMessage {
     position: absolute;
     top: 50%;
@@ -70,11 +81,12 @@ body {
 }
 </style>
 </head>
+
 <body>
 
 <div id="hud">
     <h2>ANYONE'S GAME</h2>
-    <div>Practice Course</div>
+    <div>Hole 1 — Backyard Course</div>
     <div id="powerText">Shot Power: 0%</div>
     <div id="powerBar"><div id="powerFill"></div></div>
 </div>
@@ -98,69 +110,351 @@ body {
 import * as THREE from
 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js';
 
+// ======================================
 // SCENE
+// ======================================
+
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87ceeb);
-scene.fog = new THREE.Fog(0x87ceeb, 35, 100);
+scene.fog = new THREE.Fog(0x87ceeb, 45, 110);
 
+// ======================================
 // CAMERA
+// ======================================
+
 const camera = new THREE.PerspectiveCamera(
-    65, window.innerWidth / window.innerHeight, 0.1, 200
+    65,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    200
 );
 
+// ======================================
 // RENDERER
+// ======================================
+
 const renderer = new THREE.WebGLRenderer({ antialias: true });
+
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
 document.body.appendChild(renderer.domElement);
 
+// ======================================
 // LIGHTING
-const sunlight = new THREE.DirectionalLight(0xffffff, 2);
-sunlight.position.set(-10, 20, 10);
-sunlight.castShadow = true;
-scene.add(sunlight);
-scene.add(new THREE.HemisphereLight(0xffffff, 0x668855, 1.5));
+// ======================================
 
-// GROUND
+const sunlight = new THREE.DirectionalLight(0xffffff, 2);
+
+sunlight.position.set(-10, 25, 12);
+sunlight.castShadow = true;
+
+sunlight.shadow.mapSize.width = 2048;
+sunlight.shadow.mapSize.height = 2048;
+
+scene.add(sunlight);
+
+scene.add(
+    new THREE.HemisphereLight(0xffffff, 0x668855, 1.5)
+);
+
+// ======================================
+// MATERIALS
+// ======================================
+
+const grassMaterial = new THREE.MeshStandardMaterial({
+    color: 0x55a84f,
+    roughness: 1
+});
+
+const fairwayMaterial = new THREE.MeshStandardMaterial({
+    color: 0x70bd55,
+    roughness: 1
+});
+
+const greenMaterial = new THREE.MeshStandardMaterial({
+    color: 0x83cf63,
+    roughness: 1
+});
+
+const sandMaterial = new THREE.MeshStandardMaterial({
+    color: 0xd9c18a,
+    roughness: 1
+});
+
+const waterMaterial = new THREE.MeshStandardMaterial({
+    color: 0x238fc2,
+    roughness: 0.25,
+    metalness: 0.1
+});
+
+// ======================================
+// HELPER FUNCTIONS
+// ======================================
+
+function addFlatCircle(x, z, radiusX, radiusZ, material, y = 0.02) {
+    const mesh = new THREE.Mesh(
+        new THREE.CircleGeometry(1, 64),
+        material
+    );
+
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.set(x, y, z);
+    mesh.scale.set(radiusX, radiusZ, 1);
+
+    mesh.receiveShadow = true;
+    mesh.castShadow = true;
+
+    scene.add(mesh);
+
+    return mesh;
+}
+
+function makeRoundedRectangle(width, height, radius) {
+    const shape = new THREE.Shape();
+
+    shape.moveTo(-width / 2 + radius, -height / 2);
+
+    shape.lineTo(width / 2 - radius, -height / 2);
+    shape.quadraticCurveTo(
+        width / 2, -height / 2,
+        width / 2, -height / 2 + radius
+    );
+
+    shape.lineTo(width / 2, height / 2 - radius);
+    shape.quadraticCurveTo(
+        width / 2, height / 2,
+        width / 2 - radius, height / 2
+    );
+
+    shape.lineTo(-width / 2 + radius, height / 2);
+    shape.quadraticCurveTo(
+        -width / 2, height / 2,
+        -width / 2, height / 2 - radius
+    );
+
+    shape.lineTo(-width / 2, -height / 2 + radius);
+    shape.quadraticCurveTo(
+        -width / 2, -height / 2,
+        -width / 2 + radius, -height / 2
+    );
+
+    return shape;
+}
+
+// ======================================
+// MAIN GROUND
+// ======================================
+
 const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(100, 100),
-    new THREE.MeshStandardMaterial({ color: 0x55a84f })
+    grassMaterial
 );
+
 ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
+
 scene.add(ground);
 
-// COURSE LINES
-const grid = new THREE.GridHelper(100, 50, 0x438c3c, 0x438c3c);
-grid.position.y = 0.015;
-scene.add(grid);
+// ======================================
+// FAIRWAY
+// ======================================
 
+const fairwayShape = new THREE.Shape();
+
+fairwayShape.moveTo(-5.5, -24);
+
+fairwayShape.bezierCurveTo(
+    -7, -12,
+    -5, -3,
+    -6, 6
+);
+
+fairwayShape.bezierCurveTo(
+    -6.5, 15,
+    -5, 21,
+    -4.5, 24
+);
+
+fairwayShape.lineTo(4.5, 24);
+
+fairwayShape.bezierCurveTo(
+    5, 15,
+    6.5, 8,
+    5.5, 0
+);
+
+fairwayShape.bezierCurveTo(
+    5, -10,
+    7, -17,
+    5.5, -24
+);
+
+fairwayShape.closePath();
+
+const fairway = new THREE.Mesh(
+    new THREE.ShapeGeometry(fairwayShape, 32),
+    fairwayMaterial
+);
+
+fairway.rotation.x = -Math.PI / 2;
+fairway.position.set(0, 0.025, -10);
+fairway.receiveShadow = true;
+
+scene.add(fairway);
+
+// ======================================
+// TEE BOX
+// ======================================
+
+const teeBox = new THREE.Mesh(
+    new THREE.ShapeGeometry(
+        makeRoundedRectangle(9, 5, 0.5)
+    ),
+    new THREE.MeshStandardMaterial({
+        color: 0x438f3c,
+        roughness: 1
+    })
+);
+
+teeBox.rotation.x = -Math.PI / 2;
+teeBox.position.set(0, 0.035, 11);
+teeBox.receiveShadow = true;
+
+scene.add(teeBox);
+
+// Small tee markers
+const markerMaterial = new THREE.MeshStandardMaterial({
+    color: 0xffffff
+});
+
+for (const x of [-2.5, 2.5]) {
+    const marker = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.18, 0.18, 0.12, 16),
+        markerMaterial
+    );
+
+    marker.position.set(x, 0.1, 11);
+    marker.castShadow = true;
+
+    scene.add(marker);
+}
+
+// ======================================
+// PUTTING GREEN
+// ======================================
+
+addFlatCircle(0, -30, 7.5, 7, greenMaterial, 0.045);
+
+// ======================================
+// SAND BUNKERS
+// ======================================
+
+// Left bunker
+addFlatCircle(-4.5, -29, 2.3, 1.6, sandMaterial, 0.055);
+
+// Right bunker
+addFlatCircle(4.7, -26.5, 2.4, 1.7, sandMaterial, 0.055);
+
+// ======================================
+// WATER HAZARD
+// ======================================
+
+// Shoreline
+addFlatCircle(
+    10,
+    -14,
+    5.8,
+    8,
+    new THREE.MeshStandardMaterial({ color: 0x8c9c62 }),
+    0.035
+);
+
+// Water
+addFlatCircle(10, -14, 5.2, 7.4, waterMaterial, 0.055);
+
+// ======================================
+// GOLF CUP
+// ======================================
+
+// Dark hole
+const cup = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.4, 0.4, 0.035, 32),
+    new THREE.MeshStandardMaterial({ color: 0x171717 })
+);
+
+cup.position.set(0, 0.065, -34);
+scene.add(cup);
+
+// Flagpole
+const flagpole = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.045, 0.045, 3.5, 12),
+    new THREE.MeshStandardMaterial({ color: 0xeeeeee })
+);
+
+flagpole.position.set(0, 1.8, -34);
+flagpole.castShadow = true;
+
+scene.add(flagpole);
+
+// Red flag
+const flagShape = new THREE.Shape();
+
+flagShape.moveTo(0, 0);
+flagShape.lineTo(1.1, -0.25);
+flagShape.lineTo(0, -0.65);
+flagShape.closePath();
+
+const flag = new THREE.Mesh(
+    new THREE.ShapeGeometry(flagShape),
+    new THREE.MeshStandardMaterial({
+        color: 0xe83b35,
+        side: THREE.DoubleSide
+    })
+);
+
+flag.position.set(0.04, 3.35, -34);
+
+scene.add(flag);
+
+// ======================================
 // PLAYER
+// ======================================
+
 const player = new THREE.Group();
+
 scene.add(player);
 
 const playerBody = new THREE.Mesh(
     new THREE.CapsuleGeometry(0.45, 1.0, 5, 12),
     new THREE.MeshStandardMaterial({ color: 0x2468d8 })
 );
+
 playerBody.position.y = 0.95;
 playerBody.castShadow = true;
+
 player.add(playerBody);
 
-// PLAYER FACE
+// Player face
 const face = new THREE.Mesh(
     new THREE.SphereGeometry(0.055, 12, 12),
     new THREE.MeshStandardMaterial({ color: 0xffffff })
 );
+
 face.position.set(0.16, 1.25, -0.36);
+
 player.add(face);
 
-player.position.set(-3, 0, 3);
+player.position.set(-2, 0, 13);
 
+// ======================================
 // GOLF BALL
+// ======================================
+
 const ballRadius = 0.22;
+
 const ball = new THREE.Mesh(
     new THREE.SphereGeometry(ballRadius, 32, 32),
     new THREE.MeshStandardMaterial({
@@ -168,15 +462,22 @@ const ball = new THREE.Mesh(
         roughness: 0.35
     })
 );
-ball.position.set(2, ballRadius, 0);
+
+ball.position.set(0, ballRadius, 10);
 ball.castShadow = true;
+
 scene.add(ball);
 
-const ballStart = new THREE.Vector3(2, ballRadius, 0);
+const ballStart = new THREE.Vector3(0, ballRadius, 10);
+
 let ballVelocity = new THREE.Vector3();
 
+// ======================================
 // PLAYER CONTROLS
+// ======================================
+
 const keys = {};
+
 let playerVelocityY = 0;
 
 let cameraYaw = 0;
@@ -223,6 +524,9 @@ window.addEventListener('keydown', (event) => {
     if (event.code === 'KeyR') {
         ball.position.copy(ballStart);
         ballVelocity.set(0, 0, 0);
+
+        document.getElementById('message').textContent =
+            'Ball reset!';
     }
 });
 
@@ -230,14 +534,16 @@ window.addEventListener('keyup', (event) => {
     keys[event.code] = false;
 });
 
+// ======================================
 // GOLF SHOOTING
+// ======================================
+
 let charging = false;
 let chargeTime = 0;
 
 window.addEventListener('pointerdown', (event) => {
     if (event.button !== 0) return;
 
-    // First click captures the mouse.
     if (document.pointerLockElement !== renderer.domElement) {
         return;
     }
@@ -253,7 +559,6 @@ window.addEventListener('pointerup', (event) => {
 
     const shotPower = Math.min(chargeTime / 1.5, 1);
 
-    // Shoot in the direction the camera is facing.
     const direction = new THREE.Vector3(
         Math.sin(cameraYaw),
         0,
@@ -266,19 +571,27 @@ window.addEventListener('pointerup', (event) => {
         ballVelocity.addScaledVector(
             direction, 8 + shotPower * 17
         );
+
         ballVelocity.y += 2 + shotPower * 5;
 
-        document.getElementById('message').textContent = 'NICE SHOT!';
+        document.getElementById('message').textContent =
+            'NICE SHOT!';
     } else {
         document.getElementById('message').textContent =
             'Get closer to the ball!';
     }
 });
 
+// ======================================
 // CLOCK
+// ======================================
+
 const clock = new THREE.Clock();
 
+// ======================================
 // MAIN GAME LOOP
+// ======================================
+
 function animate() {
     requestAnimationFrame(animate);
 
@@ -296,11 +609,13 @@ function animate() {
     const moving = moveX !== 0 || moveZ !== 0;
 
     if (moving) {
-        const inputLength = Math.sqrt(moveX * moveX + moveZ * moveZ);
+        const inputLength = Math.sqrt(
+            moveX * moveX + moveZ * moveZ
+        );
+
         moveX /= inputLength;
         moveZ /= inputLength;
 
-        // Forward and right directions based on camera yaw.
         const forward = new THREE.Vector3(
             Math.sin(cameraYaw), 0, -Math.cos(cameraYaw)
         );
@@ -321,7 +636,7 @@ function animate() {
         player.position.addScaledVector(direction, speed * delta);
     }
 
-    // CHARACTER ALWAYS FACES CAMERA DIRECTION.
+    // CHARACTER FACES CAMERA DIRECTION
     player.rotation.y = cameraYaw;
 
     // JUMPING AND GRAVITY
@@ -339,6 +654,7 @@ function animate() {
 
     // BALL PHYSICS
     ballVelocity.y -= gravity * delta;
+
     ball.position.addScaledVector(ballVelocity, delta);
 
     if (ball.position.y < ballRadius) {
@@ -362,10 +678,24 @@ function animate() {
     ball.rotation.x += ballVelocity.z * delta / ballRadius;
     ball.rotation.z -= ballVelocity.x * delta / ballRadius;
 
+    // WATER HAZARD DETECTION
+    const waterX = (ball.position.x - 10) / 5.2;
+    const waterZ = (ball.position.z + 14) / 7.4;
+
+    if (waterX * waterX + waterZ * waterZ < 1) {
+        ball.position.copy(ballStart);
+        ballVelocity.set(0, 0, 0);
+
+        document.getElementById('message').textContent =
+            'WATER HAZARD! Ball reset!';
+    }
+
     // CHARGING POWER
     if (charging) chargeTime += delta;
 
-    const power = charging ? Math.min(chargeTime / 1.5, 1) : 0;
+    const power = charging
+        ? Math.min(chargeTime / 1.5, 1)
+        : 0;
 
     document.getElementById('powerText').textContent =
         'Shot Power: ' + Math.round(power * 100) + '%';
@@ -378,7 +708,9 @@ function animate() {
     lookTarget.y += 1.2;
 
     const distance = 8;
-    const horizontalDistance = distance * Math.cos(cameraPitch);
+
+    const horizontalDistance =
+        distance * Math.cos(cameraPitch);
 
     const cameraOffset = new THREE.Vector3(
         -Math.sin(cameraYaw) * horizontalDistance,
@@ -386,9 +718,14 @@ function animate() {
         Math.cos(cameraYaw) * horizontalDistance
     );
 
-    const targetCameraPosition = lookTarget.clone().add(cameraOffset);
+    const targetCameraPosition =
+        lookTarget.clone().add(cameraOffset);
 
-    camera.position.lerp(targetCameraPosition, 8 * delta);
+    camera.position.lerp(
+        targetCameraPosition,
+        8 * delta
+    );
+
     camera.lookAt(lookTarget);
 
     renderer.render(scene, camera);
@@ -396,12 +733,21 @@ function animate() {
 
 animate();
 
+// ======================================
 // RESIZE
+// ======================================
+
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
+
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    renderer.setSize(
+        window.innerWidth,
+        window.innerHeight
+    );
 });
+
 </script>
 </body>
 </html>
