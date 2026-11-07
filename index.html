@@ -205,8 +205,8 @@ document.addEventListener('pointerlockchange', () => {
 document.addEventListener('mousemove', (event) => {
     if (document.pointerLockElement !== renderer.domElement) return;
 
-    cameraYaw -= event.movementX * mouseSensitivity;
-    cameraPitch += event.movementY * mouseSensitivity;
+    cameraYaw += event.movementX * mouseSensitivity;
+    cameraPitch -= event.movementY * mouseSensitivity;
 
     cameraPitch = THREE.MathUtils.clamp(
         cameraPitch, -0.8, 0.8
